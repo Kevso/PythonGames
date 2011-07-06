@@ -54,9 +54,9 @@ def redraw_all():
     canvas.create_oval(cx-r, cy-r, cx+r, cy+r, fill="cyan")
     score  = canvas.data.score
     helv18 = tkFont.Font ( family="Helvetica", size=18, weight="bold" )
-    canvas.create_text(150,20, font=helv18, justify="center", text="SCORE = " + str(score) )
+    canvas.create_text(150,20, font=helv18, justify="center", text="SCORE = " + str(score))
     delay_time  = canvas.data.delay
-    canvas.create_text(150,50, font=helv18, justify="center", text="Delay = " + str(delay_time)  
+    canvas.create_text(150,50, font=helv18, justify="center", text="Delay = " + str(delay_time))
 
 def mouse_clicked(event):
     count_score(event)
