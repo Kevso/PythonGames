@@ -1,6 +1,23 @@
 #!/usr/bin/env python
 import Tkinter, tkFont
 
+class Ball:
+    def __init__(self, id, x, y, radius, color="cyan"):
+        self.id, self.x, self.y, self.radius, self.color = id, x, y, radius, color
+        
+    def move_right(self):
+        self.x += 5
+        if self.x + self.radius >= canvas_width:
+            self.x = self.radius
+
+    def move_left(self):
+        self.x -= 5
+        if self.x - self.radius < 0:
+            self.x = canvas_width
+
+    def draw(self):
+        canvas.create_oval(self.x-self.radius, self.y-self.radius, self.x+self.radius, self.y+self.radius, fill=self.color)
+
 def run():
     global canvas, canvas_width, canvas_height
     root = Tkinter.Tk()
@@ -23,9 +40,10 @@ def run():
 def init():
     canvas.data.radius = 10
     canvas.data.score = 0
-    canvas.data.cx = 10
-    canvas.data.cy = 100
-    canvas.data.delay = 10
+    canvas.data.delay = 15
+    canvas.data.balls = []
+    canvas.data.balls += [Ball(id=0, x=0, y=100, radius=10)]
+    canvas.data.balls += [Ball(id=1, x=canvas_width, y=100, radius=10)]
         
 def timer_fired():
     do_timer_fired()
@@ -33,25 +51,19 @@ def timer_fired():
     canvas.after(delay, timer_fired)
     
 def do_timer_fired():
-    move_right()
-    redraw_all()
-
-def move_right():
-    canvas.data.cx += 5
-    if canvas.data.cx + canvas.data.radius >= canvas_width:
-        canvas.data.cx = canvas.data.radius
-
-def move_left():
-    canvas.data.cx -= 5
-    if canvas.data.cx - canvas.data.radius <= canvas_width:
-        canvas.data.cx = canvas.data.radius
-
-def redraw_all():
     canvas.delete(Tkinter.ALL)
-    r = canvas.data.radius
-    cx = canvas.data.cx
-    cy = canvas.data.cy
-    canvas.create_oval(cx-r, cy-r, cx+r, cy+r, fill="cyan")
+    move_balls()
+    draw_reports()
+
+def move_balls():
+    for ball in canvas.data.balls:
+        if ball.id % 2 == 0:
+            ball.move_left()
+        else:
+            ball.move_right()
+        ball.draw()
+            
+def draw_reports():
     score  = canvas.data.score
     helv18 = tkFont.Font ( family="Helvetica", size=18, weight="bold" )
     canvas.create_text(150,20, font=helv18, justify="center", text="SCORE = " + str(score))
