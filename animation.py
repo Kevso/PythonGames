@@ -83,13 +83,11 @@ def count_score(event):
 
 def is_inside(event):
     x,y = (event.x, event.y)
-    cx = canvas.data.cx
-    cy = canvas.data.cy
-    r = canvas.data.radius
-    if(cx-r <= x <= cx+r and cy-r <= y <= cy+r):
-        return True
-    else:
-        return False
+    for ball in canvas.data.balls:
+        if(ball.x-ball.radius <= x <= ball.x+ball.radius and ball.y-ball.radius <= y <= ball.y+ball.radius):
+            return True
+        else:
+            return False
 
 def key_pressed(event):
     if(event.keysym == "Up"):
