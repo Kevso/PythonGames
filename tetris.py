@@ -21,9 +21,38 @@ def keyPressed(event):
     redrawAll()
 
 #############Rotating Piece
+def fallingPieceCenter():
+    row = len(canvas.data.fallingPiece) / 2
+    col = len(canvas.data.fallingPiece[0]) /2
+    return (row, col)
 
 def rotateFallingPiece():
-    pass
+    newPiece = [] # Make a temporary new matrix for rotated falling Piece
+    canvas.data.currentRow = len(canvas.data.fallingPiece)
+    canvas.data.currentCol = len(canvas.data.fallingPiece[0])
+    currentFallingPiece = canvas.data.fallingPiece
+    (oldRow,oldCol) = fallingPieceCenter()
+    # Switch Rows and Cols into into temporary rows and cols of pieces position
+    canvas.data.currentRow = len(canvas.data.fallingPiece[0]) 
+    canvas.data.currentCol = len(canvas.data.fallingPiece)
+    (newRow,newCol) = fallingPieceCenter()
+    canvas.data.fallingPieceRow -= (newRow - oldRow)
+    canvas.data.fallingPieceCol -= (newCol - oldCol)
+    
+    for row in range(canvas.data.currentRow):
+        newPiece += [[True]*canvas.data.currentCol]
+        
+    for col in range(len(canvas.data.fallingPiece[0])):
+        for row in range(len(canvas.data.fallingPiece)):
+            newPiece[col][row] = canvas.data.fallingPiece[row]\
+                                 [len(canvas.data.fallingPiece[0])-1-col]
+    canvas.data.fallingPiece = newPiece
+    # Test whether the rotated Piece is in a legal place
+    if (fallingPieceIsLegal(canvas.data.fallingPieceRow,
+                           canvas.data.fallingPieceCol) == False):
+        canvas.data.fallingPiece = currentFallingPiece
+        canvas.data.fallingPieceRow += (newRow - oldRow)
+        canvas.data.fallingPieceCol += (newCol - oldCol)
 
 ############Falling Piece
 
@@ -41,12 +70,18 @@ def placeFallingPiece():
     pass
 
 def fallingPieceIsLegal(pieceRow, pieceCol):
-    pieceWidth = len(canvas.data.fallingPiece[0])
-    pieceHeight = len(canvas.data.fallingPiece)
-    return (0 <= pieceRow)\
-        and (pieceRow + pieceHeight <= canvas.data.rows)\
-        and (0 <= pieceCol)\
-        and (pieceCol + pieceWidth <= canvas.data.cols)
+    rows = len(canvas.data.fallingPiece)
+    cols = len(canvas.data.fallingPiece[0])
+    for row in range(rows):
+        for col in range(cols):
+            if canvas.data.fallingPiece[row][col] == True:
+                 if ((pieceRow+row < 0) or (pieceRow+row >= canvas.data.rows) or\
+                     (pieceCol+col < 0) or (pieceCol+col >= canvas.data.cols)):
+                     return False
+                 elif (canvas.data.board[pieceRow+row][pieceCol+col] !=
+                       canvas.data.emptyColors):
+                     return False       
+    return True
     
 
 #############New Piece
@@ -117,8 +152,6 @@ def drawCell(row, col, cellColor):
                             right+gridMargin, bottom+gridMargin, fill="black")
     canvas.create_rectangle(left+gridMargin, top+gridMargin,
                             right-gridMargin, bottom-gridMargin, fill=cellColor)
-
-
 
 ##############Full Rows
 
