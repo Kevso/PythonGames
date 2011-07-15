@@ -9,6 +9,8 @@ def init():
     canvas.data.board = make_matrix(canvas.data.rows, canvas.data.cols)
     canvas.data.delay = 500
     canvas.data.is_game_over  = False
+    canvas.data.player_row = bottom_row()
+    canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
 
 # Run the game system
 def run(rows, cols):
@@ -26,6 +28,8 @@ def run(rows, cols):
     class Struct:pass
     canvas.data =  Struct()
     canvas.data.empty_color = "white"
+    canvas.data.bug_color = "black"
+    canvas.data.player_color = "gray"
     canvas.data.rows = rows
     canvas.data.cols = cols
     canvas.data.width = canvas_width
@@ -33,6 +37,9 @@ def run(rows, cols):
     canvas.data.cell_size = cell_size
     canvas.data.margin = canvas_margin
     canvas.pack()
+
+    # Register event listeners
+    root.bind("<Key>", key_pressed)
 
     # Go save the planet!
     init()
@@ -62,6 +69,29 @@ def draw_board():
         for col in range(cols):
             draw_cell(row, col, board[row][col])
 
+def draw_bug(row,col):
+    draw_cell(row, col, canvas.data.bug_color)
+
+def draw_player(row,col):
+    draw_cell(row, col, canvas.data.player_color)
+
+def move_player(row_delta, col_delta):
+    row = canvas.data.player_row + row_delta
+    col = canvas.data.player_col + col_delta
+    if is_valid_move(row, col):
+
+        # clear old player location
+        draw_cell(canvas.data.player_row, canvas.data.player_col, canvas.data.empty_color)
+        
+        # set new player location
+        canvas.data.player_row = row
+        canvas.data.player_col = col
+    print canvas.data.board[bottom_row()]
+    redraw_all()
+
+def is_valid_move(row, col):
+    return 0 < row <= bottom_row() and 0 <= col < canvas.data.cols
+
 def redraw_all():
     
     # Clear the board
@@ -76,6 +106,7 @@ def redraw_all():
 
     # Render board
     draw_board()
+    draw_player(canvas.data.player_row, canvas.data.player_col)
     if canvas.data.is_game_over:
         canvas.create_text(canvas.data.width / 2,
                            canvas.data.canvas_height * 2 / 5, text="Game Over Man!",
@@ -98,5 +129,18 @@ def fire_timer():
         pass
     canvas.after(canvas.data.delay, fire_timer)
 
+def bottom_row():
+    return len(canvas.data.board) - 1
+
+def key_pressed(event):
+    if 'y' == event.keysym:
+        init()
+    elif not canvas.data.is_game_over:
+        if "Left" == event.keysym:
+            move_player(0, -1)
+        elif "Right" == event.keysym:
+            move_player(0, +1)
+    redraw_all()
+        
 # Run the game
 run(30, 20)
