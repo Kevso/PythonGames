@@ -67,7 +67,12 @@ def moveFallingPiece(drow, dcol):
         return False
 
 def placeFallingPiece():
-    pass
+    rows = len(canvas.data.fallingPiece)
+    cols = len(canvas.data.fallingPiece[0])
+    for row in range(rows):
+        for col in range(cols):
+            if canvas.data.fallingPiece[row][col] == True:
+                canvas.data.board[canvas.data.fallingPieceRow + row][canvas.data.fallingPieceCol + col] = canvas.data.fallingPieceColor
 
 def fallingPieceIsLegal(pieceRow, pieceCol):
     rows = len(canvas.data.fallingPiece)
@@ -79,7 +84,7 @@ def fallingPieceIsLegal(pieceRow, pieceCol):
                      (pieceCol+col < 0) or (pieceCol+col >= canvas.data.cols)):
                      return False
                  elif (canvas.data.board[pieceRow+row][pieceCol+col] !=
-                       canvas.data.emptyColors):
+                       canvas.data.emptyColor):
                      return False       
     return True
     
@@ -159,21 +164,43 @@ def removeFullRows():
     # If ifFullRow returns False,do not pop, if True, pop the row
     # score is calculated for each row deleted, if more than is deleted at once
     # square the numbers of rows deleted at once
-    pass
+    rows = len(canvas.data.board)
+    score = 0
+    hadFullRows = False
+    for row in range(rows):
+        if isFullRow(row):
+            canvas.data.board.pop(row)
+            canvas.data.board.insert(0, [canvas.data.emptyColor] * canvas.data.cols)
+            score += 1
+            hadFullRows = True
+    if hadFullRows:
+        canvas.data.score += score
+        adjustSpeed() # Get a little bit faster!
 
-def ifFullRow(row):
+def adjustSpeed():
+    currentLevel = canvas.data.score / canvas.data.levelUpScoreInterval
+    if currentLevel != canvas.data.level:
+        canvas.data.level = currentLevel
+        canvas.data.delay = speedCalc(canvas.data.level)
+
+def speedCalc(level):
+    return int(canvas.data.delay / level)
+
+def isFullRow(row):
     # Tests each row and see that if it ever contains a blue cell, if it is,
-    # it returns False, if it does not, returns True
-    pass   # add your code here
+    # it returns False, if it does not, returns Trur
+    for col in canvas.data.board[row]:
+        if col == canvas.data.emptyColor:
+            return False
     return True
 
 def make2dList(rows, cols):
-    tetrisBoard = [cols * [columns] for columns in [canvas.data.emptyColors] * rows]
+    tetrisBoard = [cols * [columns] for columns in [canvas.data.emptyColor] * rows]
     return tetrisBoard
 
 
 def timerFired():
-    #removeFullRows()
+    removeFullRows()
     if (canvas.data.isGameOver == True):
         redrawAll()
     else:
@@ -185,12 +212,15 @@ def timerFired():
             if fallingPieceIsLegal(canvas.data.fallingPieceRow,
                                        canvas.data.fallingPieceCol) == False:
                     canvas.data.isGameOver = True
-    delay = 500 # milliseconds
-    canvas.after(delay, timerFired) # pause, then call timerFired again
+    canvas.after(canvas.data.delay, timerFired) # pause, then call timerFired again
 
 def init():
     canvas.data.board = make2dList(canvas.data.rows,canvas.data.cols)
     canvas.data.score = 0
+    canvas.data.delay = canvas.data.standardDelay = 500 #milliseconds
+    canvas.data.level = 0
+    canvas.data.levelDelayDelta = .8 # 20% speed increase from level to level
+    canvas.data.levelUpScoreInterval = 10
     #Seven "standard" pieces (tetrominoes)
     iPiece = [ [ True,  True,  True,  True] ]
     
@@ -242,7 +272,7 @@ def run(rows, cols):
     # Set up canvas data and call init
     class Struct: pass
     canvas.data = Struct()
-    canvas.data.emptyColors = "blue"
+    canvas.data.emptyColor = "blue"
     canvas.data.margin = margin
     canvas.data.cellSize = cellSize
     canvas.data.canvasWidth = canvasWidth
