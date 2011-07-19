@@ -11,6 +11,9 @@ def init():
     canvas.data.is_game_over  = False
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
+    canvas.data.bug_saturation = .5
+    canvas.data.max_bug_rows = 10
+    canvas.data.current_bug_rows = 0
 
 # Run the game system
 def run(rows, cols):
@@ -28,7 +31,7 @@ def run(rows, cols):
     class Struct:pass
     canvas.data =  Struct()
     canvas.data.empty_color = "white"
-    canvas.data.bug_color = "black"
+    canvas.data.bug_color = "pink"
     canvas.data.player_color = "gray"
     canvas.data.rows = rows
     canvas.data.cols = cols
@@ -61,6 +64,20 @@ def draw_cell(row, col, color):
     bottom = top + cell_size
     canvas.create_rectangle(left, top, right, bottom, fill=color)
 
+def should_draw_new_bug_row():
+    return not canvas.data.current_bug_rows == canvas.data.max_bug_rows \
+        and not contains_bugs(top_row())
+
+def contains_bugs(row):
+    for col in len(row):
+        if row[col] == canvas.data.bug_color:
+            return True
+    return False
+
+def make_bug_row():
+    for col in range(int(canvas.data.cols * canvas.data.bug_saturation)):
+        draw_bug(row=0, col=col);
+
 def draw_board():
     board = canvas.data.board
     rows = len(board)
@@ -87,6 +104,9 @@ def move_player(row_delta, col_delta):
         canvas.data.player_row = row
         canvas.data.player_col = col
     redraw_all()
+
+def move_bugs():
+    pass
 
 def is_valid_player_move(row, col):
     return is_on_board(row, col) and row == bottom_row()
@@ -127,9 +147,14 @@ def redraw_all():
 def fire_timer():
     redraw_all()
     if not canvas.data.is_game_over:
-        # move bugs
+        if should_draw_new_bug_row:
+            make_bug_row()
+        move_bugs()
         pass
     canvas.after(canvas.data.delay, fire_timer)
+
+def top_row():
+    return 0
 
 def bottom_row():
     return len(canvas.data.board) - 1
@@ -143,6 +168,6 @@ def key_pressed(event):
         elif "Right" == event.keysym:
             move_player(0, +1)
     redraw_all()
-        
+
 # Run the game
 run(30, 20)
