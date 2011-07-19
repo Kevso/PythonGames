@@ -62,21 +62,27 @@ def draw_cell(row, col, color):
     right  = left + cell_size
     top    = cell_size * row + margin
     bottom = top + cell_size
+    
+    #Update data model
+    canvas.data.board[row][col] = color
+
+    #update presentation model
     canvas.create_rectangle(left, top, right, bottom, fill=color)
 
-def should_draw_new_bug_row():
-    return not canvas.data.current_bug_rows == canvas.data.max_bug_rows \
+def should_make_bug_row():
+    return canvas.data.current_bug_rows < canvas.data.max_bug_rows \
         and not contains_bugs(top_row())
 
-def contains_bugs(row):
-    for col in len(row):
-        if row[col] == canvas.data.bug_color:
+def contains_bugs(row_num):
+    for col in canvas.data.board[row_num]:
+        if col == canvas.data.bug_color:
             return True
     return False
 
 def make_bug_row():
     for col in range(int(canvas.data.cols * canvas.data.bug_saturation)):
         draw_bug(row=0, col=col);
+    canvas.data.current_bug_rows += 1
 
 def draw_board():
     board = canvas.data.board
@@ -147,7 +153,7 @@ def redraw_all():
 def fire_timer():
     redraw_all()
     if not canvas.data.is_game_over:
-        if should_draw_new_bug_row:
+        if should_make_bug_row():
             make_bug_row()
         move_bugs()
         pass
