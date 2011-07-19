@@ -78,7 +78,7 @@ def draw_player(row,col):
 def move_player(row_delta, col_delta):
     row = canvas.data.player_row + row_delta
     col = canvas.data.player_col + col_delta
-    if is_valid_move(row, col):
+    if is_valid_player_move(row, col):
 
         # clear old player location
         draw_cell(canvas.data.player_row, canvas.data.player_col, canvas.data.empty_color)
@@ -86,11 +86,13 @@ def move_player(row_delta, col_delta):
         # set new player location
         canvas.data.player_row = row
         canvas.data.player_col = col
-    print canvas.data.board[bottom_row()]
     redraw_all()
 
-def is_valid_move(row, col):
-    return 0 < row <= bottom_row() and 0 <= col < canvas.data.cols
+def is_valid_player_move(row, col):
+    return is_on_board(row, col) and row == bottom_row()
+
+def is_on_board(row, col):
+    return 0 < row < canvas.data.rows and 0 <= col < canvas.data.cols
 
 def redraw_all():
     
