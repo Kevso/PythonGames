@@ -14,6 +14,7 @@ def init():
     canvas.data.bug_saturation = .5
     canvas.data.max_bug_rows = 10
     canvas.data.current_bug_rows = 0
+    make_player(canvas.data.player_row, canvas.data.player_col)
 
 # Run the game system
 def run(rows, cols):
@@ -63,9 +64,6 @@ def draw_cell(row, col, color):
     top    = cell_size * row + margin
     bottom = top + cell_size
     
-    #Update data model
-    canvas.data.board[row][col] = color
-
     #update presentation model
     canvas.create_rectangle(left, top, right, bottom, fill=color)
 
@@ -81,7 +79,7 @@ def contains_bugs(row_num):
 
 def make_bug_row():
     for col in range(int(canvas.data.cols * canvas.data.bug_saturation)):
-        draw_bug(row=0, col=col);
+        make_bug(row=0, col=col);
     canvas.data.current_bug_rows += 1
 
 def draw_board():
@@ -92,23 +90,29 @@ def draw_board():
         for col in range(cols):
             draw_cell(row, col, board[row][col])
 
-def draw_bug(row,col):
-    draw_cell(row, col, canvas.data.bug_color)
+def make_bug(row,col):
+    canvas.data.board[row][col] = canvas.data.bug_color
 
-def draw_player(row,col):
-    draw_cell(row, col, canvas.data.player_color)
+def make_player(row,col):
+    canvas.data.board[row][col] = canvas.data.player_color
+
+def make_empty(row, col):
+    canvas.data.board[row][col] = canvas.data.empty_color
 
 def move_player(row_delta, col_delta):
     row = canvas.data.player_row + row_delta
     col = canvas.data.player_col + col_delta
     if is_valid_player_move(row, col):
+        current_row = canvas.data.player_row
+        current_col = canvas.data.player_col
 
         # clear old player location
-        draw_cell(canvas.data.player_row, canvas.data.player_col, canvas.data.empty_color)
+        make_empty(current_row, current_col)
         
         # set new player location
         canvas.data.player_row = row
         canvas.data.player_col = col
+        make_player(canvas.data.player_row, canvas.data.player_col)
     redraw_all()
 
 def move_bugs():
@@ -134,7 +138,6 @@ def redraw_all():
 
     # Render board
     draw_board()
-    draw_player(canvas.data.player_row, canvas.data.player_col)
     if canvas.data.is_game_over:
         canvas.create_text(canvas.data.width / 2,
                            canvas.data.canvas_height * 2 / 5, text="Game Over Man!",
