@@ -14,6 +14,7 @@ def init():
     canvas.data.bug_saturation = .5
     canvas.data.max_bug_rows = 10
     canvas.data.current_bug_rows = 0
+    canvas.data.bug_marching_direction = lambda x: x+1 #bugs march to the right
     make_player(canvas.data.player_row, canvas.data.player_col)
 
 # Run the game system
@@ -116,6 +117,51 @@ def move_player(row_delta, col_delta):
     redraw_all()
 
 def move_bugs():
+# The order in which you shift the bugs depends on the direction
+        # they're marching
+    if bugs_are_moving_right():
+        for row in range(len(canvas.data.board)):
+            for col in range(len(canvas.data.board[0])-1, -1, -1):
+                if is_bug(canvas.data.board[row][col]):
+                    print "RIGHT"
+                    move_bug(row, col)
+    else:
+        for row in range(len(canvas.data.board)):
+            for col in range(len(canvas.data.board[0])):
+                if is_bug(canvas.data.board[row][col]):
+                    print "LEFT"
+                    move_bug(row, col)
+        
+    redraw_all()
+
+def move_bug(row, col):
+    fn = canvas.data.bug_marching_direction
+    new_col = fn(col)
+    if is_at_edge(new_col):
+        change_bug_direction()
+        move_all_bugs_down_one_row(row)
+        fn = canvas.data.bug_marching_direction
+        new_col = fn(col)
+    make_empty(row, col)
+    
+    #apply the maching direction function
+    make_bug(row, new_col)
+
+def change_bug_direction():
+    print "Changing Bug Direction: ",
+    if bugs_are_moving_right():
+        print "Should start moving left..."
+        canvas.data.bug_marching_direction = lambda x: x-1
+    else:
+        print "Should start moving right..."
+        canvas.data.bug_marching_direction = lambda x: x+1
+
+def bugs_are_moving_right():
+    fn = canvas.data.bug_marching_direction
+    x = 0
+    return fn(x) > x
+
+def move_all_bugs_down_one_row(row):
     pass
 
 def is_valid_player_move(row, col):
@@ -123,6 +169,12 @@ def is_valid_player_move(row, col):
 
 def is_on_board(row, col):
     return 0 < row < canvas.data.rows and 0 <= col < canvas.data.cols
+
+def is_bug(col):
+    return col == canvas.data.bug_color
+
+def is_at_edge(col):
+    return col == 0 or col == canvas.data.cols
 
 def redraw_all():
     
