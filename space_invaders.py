@@ -12,10 +12,11 @@ def init():
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
     canvas.data.bug_saturation = .5
-    canvas.data.max_bug_rows = 1
+    canvas.data.max_bug_rows = 10
     canvas.data.current_bug_rows = 0
     canvas.data.bug_marching_delta = 1 #bugs march to the right
     canvas.data.bugs_changed_direction = False
+    make_bug_row() # Make the initial line of the swarm
     make_player(canvas.data.player_row, canvas.data.player_col)
 
 # Run the game system
@@ -83,8 +84,15 @@ def contains_bugs(row_num):
 
 # Makes a new row with the appropriate number of bugs
 def make_bug_row():
-    for col in range(int(canvas.data.cols * canvas.data.bug_saturation)):
-        make_bug(row=0, col=col);
+    # The marching direction determines if the new row should be placed
+    # at the left or right side of the board
+    if bugs_are_moving_right():
+        for col in range(int(canvas.data.cols * canvas.data.bug_saturation)):
+            make_bug(row=0, col=col)
+    else:
+        num_bugs_to_draw = int(canvas.data.cols * canvas.data.bug_saturation)
+        for col in range(canvas.data.cols-1, num_bugs_to_draw-1, -1):
+            make_bug(row=0, col=col)
     canvas.data.current_bug_rows += 1
 
 # Renders the entire game board and all of its pieces
@@ -177,6 +185,8 @@ def move_all_bugs_down_one_row():
         for col in range(len(canvas.data.board[0])-1, -1, -1):
             if is_bug(canvas.data.board[row][col]):
                 move_bug_vertical(row, col)
+    if should_make_bug_row():
+            make_bug_row()
 
 # Determines if the player can move to a given location on the board.
 def is_valid_player_move(row, col):
@@ -227,10 +237,7 @@ def redraw_all():
 def fire_timer():
     redraw_all()
     if not canvas.data.is_game_over:
-        if should_make_bug_row():
-            make_bug_row()
         move_bugs()
-        pass
     canvas.after(canvas.data.delay, fire_timer)
 
 # Returns the vertical coordinate of the top row on the board
