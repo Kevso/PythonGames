@@ -125,36 +125,29 @@ def move_bugs():
         for row in range(len(canvas.data.board)):
             for col in range(len(canvas.data.board[0])-1, -1, -1):
                 if is_bug(canvas.data.board[row][col]) and not canvas.data.bugs_changed_direction:
-                    print "RIGHT"
                     move_bug(row, col)
     else:
         canvas.data.bugs_changed_direction = False
         for row in range(len(canvas.data.board)):
             for col in range(len(canvas.data.board[0])):
                 if is_bug(canvas.data.board[row][col]) and not canvas.data.bugs_changed_direction:
-                    print "LEFT"
                     move_bug(row, col)
     redraw_all()
 
 def move_bug(row, col):
     new_col = col + canvas.data.bug_marching_delta
     if is_off_edge(new_col):
-        print "At the edge."
         change_bug_direction()
         move_all_bugs_down_one_row(row)
-        new_col = col + canvas.data.bug_marching_delta
-    make_empty(row, col)
-    print "Moving ({0},{1}) to ({2}, {3})".format(row, col, row, new_col)
-    make_bug(row, new_col)
+    else:
+        make_empty(row, col)
+        make_bug(row, new_col)
 
 def change_bug_direction():
     canvas.data.bugs_changed_direction = True
-    print "Changing Bug Direction: ",
     if bugs_are_moving_right():
-        print "Should start moving left..."
         canvas.data.bug_marching_delta = -1
     else:
-        print "Should start moving right..."
         canvas.data.bug_marching_delta = 1
 
 def bugs_are_moving_right():
