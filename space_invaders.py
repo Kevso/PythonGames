@@ -69,21 +69,25 @@ def draw_cell(row, col, color):
     #update presentation model
     canvas.create_rectangle(left, top, right, bottom, fill=color)
 
+# Determines if the the swarm has been fully rendered
 def should_make_bug_row():
     return canvas.data.current_bug_rows < canvas.data.max_bug_rows \
         and not contains_bugs(top_row())
 
+# Determines if the input row contains bugs
 def contains_bugs(row_num):
     for col in canvas.data.board[row_num]:
         if col == canvas.data.bug_color:
             return True
     return False
 
+# Makes a new row with the appropriate number of bugs
 def make_bug_row():
     for col in range(int(canvas.data.cols * canvas.data.bug_saturation)):
         make_bug(row=0, col=col);
     canvas.data.current_bug_rows += 1
 
+# Renders the entire game board and all of its pieces
 def draw_board():
     board = canvas.data.board
     rows = len(board)
@@ -92,15 +96,19 @@ def draw_board():
         for col in range(cols):
             draw_cell(row, col, board[row][col])
 
+# Makes a cell on the board represent a bug
 def make_bug(row,col):
     canvas.data.board[row][col] = canvas.data.bug_color
 
+# Makes a cell on the board represent the player
 def make_player(row,col):
     canvas.data.board[row][col] = canvas.data.player_color
 
+# Makes a cell on the board represent an unoccupied area
 def make_empty(row, col):
     canvas.data.board[row][col] = canvas.data.empty_color
 
+# Moves the player's avatar on the board
 def move_player(row_delta, col_delta):
     row = canvas.data.player_row + row_delta
     col = canvas.data.player_col + col_delta
@@ -117,6 +125,7 @@ def move_player(row_delta, col_delta):
         make_player(canvas.data.player_row, canvas.data.player_col)
     redraw_all()
 
+# Moves all of the bugs on the board in their marching direction.
 def move_bugs():
     # The order in which you shift the bugs depends on the direction
     # they're marching
@@ -134,6 +143,7 @@ def move_bugs():
                     move_bug_horizontal(row, col)
     redraw_all()
 
+# Moves a single bug on the board horizontally in the appropriate marching direction.
 def move_bug_horizontal(row, col):
     new_col = col + canvas.data.bug_marching_delta
     if is_off_edge(new_col):
@@ -143,11 +153,13 @@ def move_bug_horizontal(row, col):
         make_empty(row, col)
         make_bug(row, new_col)
 
+# Moves a bug to the next row on the board
 def move_bug_vertical(row, col):
     new_row = row + 1
     make_empty(row, col)
     make_bug(new_row, col)
 
+# Changes the direction in which the bugs are marching
 def change_bug_direction():
     canvas.data.bugs_changed_direction = True
     if bugs_are_moving_right():
@@ -155,27 +167,34 @@ def change_bug_direction():
     else:
         canvas.data.bug_marching_delta = 1
 
+# Determines the direction the bugs are marching
 def bugs_are_moving_right():
     return canvas.data.bug_marching_delta == 1
 
+# Moves all of the bugs on the board one row closer to the player
 def move_all_bugs_down_one_row():
     for row in range(len(canvas.data.board)-1, -1, -1):
         for col in range(len(canvas.data.board[0])-1, -1, -1):
             if is_bug(canvas.data.board[row][col]):
                 move_bug_vertical(row, col)
 
+# Determines if the player can move to a given location on the board.
 def is_valid_player_move(row, col):
     return is_on_board(row, col) and row == bottom_row()
 
+# Determines if a given location is on the board
 def is_on_board(row, col):
     return 0 < row < canvas.data.rows and 0 <= col < canvas.data.cols
 
-def is_bug(col):
-    return col == canvas.data.bug_color
+# Determines if a given cell on the board is a bug
+def is_bug(cell):
+    return cell == canvas.data.bug_color
 
+# Determines if the given column is within the horizontal bounds of the board
 def is_off_edge(col):
     return col < 0 or canvas.data.cols <= col
 
+# Re-renders the entire game window
 def redraw_all():
     
     # Clear the board
@@ -214,12 +233,15 @@ def fire_timer():
         pass
     canvas.after(canvas.data.delay, fire_timer)
 
+# Returns the vertical coordinate of the top row on the board
 def top_row():
     return 0
 
+# Returns the vertical coordinate of the bottom row on the board
 def bottom_row():
     return len(canvas.data.board) - 1
 
+# Keyboard event interceptor
 def key_pressed(event):
     if 'y' == event.keysym:
         init()
