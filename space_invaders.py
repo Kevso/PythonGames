@@ -12,7 +12,7 @@ def init():
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
     canvas.data.bug_saturation = .5
-    canvas.data.max_bug_rows = 10
+    canvas.data.max_bug_rows = 1
     canvas.data.current_bug_rows = 0
     canvas.data.bug_marching_delta = 1 #bugs march to the right
     canvas.data.bugs_changed_direction = False
@@ -118,30 +118,35 @@ def move_player(row_delta, col_delta):
     redraw_all()
 
 def move_bugs():
-# The order in which you shift the bugs depends on the direction
-        # they're marching
+    # The order in which you shift the bugs depends on the direction
+    # they're marching
     if bugs_are_moving_right():
         canvas.data.bugs_changed_direction = False
         for row in range(len(canvas.data.board)):
             for col in range(len(canvas.data.board[0])-1, -1, -1):
                 if is_bug(canvas.data.board[row][col]) and not canvas.data.bugs_changed_direction:
-                    move_bug(row, col)
+                    move_bug_horizontal(row, col)
     else:
         canvas.data.bugs_changed_direction = False
         for row in range(len(canvas.data.board)):
             for col in range(len(canvas.data.board[0])):
                 if is_bug(canvas.data.board[row][col]) and not canvas.data.bugs_changed_direction:
-                    move_bug(row, col)
+                    move_bug_horizontal(row, col)
     redraw_all()
 
-def move_bug(row, col):
+def move_bug_horizontal(row, col):
     new_col = col + canvas.data.bug_marching_delta
     if is_off_edge(new_col):
         change_bug_direction()
-        move_all_bugs_down_one_row(row)
+        move_all_bugs_down_one_row()
     else:
         make_empty(row, col)
         make_bug(row, new_col)
+
+def move_bug_vertical(row, col):
+    new_row = row + 1
+    make_empty(row, col)
+    make_bug(new_row, col)
 
 def change_bug_direction():
     canvas.data.bugs_changed_direction = True
@@ -153,8 +158,11 @@ def change_bug_direction():
 def bugs_are_moving_right():
     return canvas.data.bug_marching_delta == 1
 
-def move_all_bugs_down_one_row(row):
-    pass
+def move_all_bugs_down_one_row():
+    for row in range(len(canvas.data.board)-1, -1, -1):
+        for col in range(len(canvas.data.board[0])-1, -1, -1):
+            if is_bug(canvas.data.board[row][col]):
+                move_bug_vertical(row, col)
 
 def is_valid_player_move(row, col):
     return is_on_board(row, col) and row == bottom_row()
