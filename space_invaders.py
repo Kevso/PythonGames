@@ -11,7 +11,7 @@ def init():
     canvas.data.is_game_over  = False
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
-    canvas.data.bug_saturation = .5
+    canvas.data.bug_saturation = .666
     canvas.data.max_bug_rows = 10
     canvas.data.current_bug_rows = 0
     canvas.data.bug_marching_delta = 1 #bugs march to the right
@@ -106,6 +106,8 @@ def draw_board():
 
 # Makes a cell on the board represent a bug
 def make_bug(row,col):
+    if is_player(row, col):
+        canvas.data.is_game_over = True
     canvas.data.board[row][col] = canvas.data.bug_color
 
 # Makes a cell on the board represent the player
@@ -200,6 +202,10 @@ def is_on_board(row, col):
 def is_bug(cell):
     return cell == canvas.data.bug_color
 
+# Detemines if a given coordinate on the board is where the player avatar resides
+def is_player(row, col):
+    return canvas.data.board[row][col] == canvas.data.player_color
+
 # Determines if the given column is within the horizontal bounds of the board
 def is_off_edge(col):
     return col < 0 or canvas.data.cols <= col
@@ -213,18 +219,19 @@ def redraw_all():
     # Setup text styling
     text_font = "Helvetica "
     text_normal_color = "black"
-    text_alert_color = "red "
+    text_alert_color = "red"
     text_normal_size = "13 "
     text_alert_size = "26 "
 
     # Render board
     draw_board()
     if canvas.data.is_game_over:
+        game_over_y = canvas.data.height * 2 / 5
         canvas.create_text(canvas.data.width / 2,
-                           canvas.data.canvas_height * 2 / 5, text="Game Over Man!",
+                           game_over_y, text="Game Over Man!",
                            fill=text_alert_color, font=text_font + text_alert_size + " bold")
         canvas.create_text(canvas.data.width / 2,
-                           canvas.data.height * 2 / 5, text="Play Again? (y)",
+                           game_over_y + int(text_alert_size) + 5, text="Play Again? (y)",
                            fill=text_alert_color, font=text_font + text_normal_size +" bold")
     else:
         canvas.create_text(canvas.data.width / 2,
