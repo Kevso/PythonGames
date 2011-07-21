@@ -86,12 +86,12 @@ def contains_bugs(row_num):
 def make_bug_row():
     # The marching direction determines if the new row should be placed
     # at the left or right side of the board
+    num_bugs_to_draw = int(canvas.data.cols * canvas.data.bug_saturation)
     if bugs_are_moving_right():
-        for col in range(int(canvas.data.cols * canvas.data.bug_saturation)):
+        for col in range(num_bugs_to_draw):
             make_bug(row=0, col=col)
     else:
-        num_bugs_to_draw = int(canvas.data.cols * canvas.data.bug_saturation)
-        for col in range(canvas.data.cols-1, num_bugs_to_draw-1, -1):
+        for col in range(canvas.data.cols-1, canvas.data.cols-num_bugs_to_draw-1, -1):
             make_bug(row=0, col=col)
     canvas.data.current_bug_rows += 1
 
