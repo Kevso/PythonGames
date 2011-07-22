@@ -37,6 +37,8 @@ def run(rows, cols):
     canvas.data.empty_color = "white"
     canvas.data.bug_color = "pink"
     canvas.data.player_color = "gray"
+    canvas.data.player_bullet_color = "black"
+    canvas.data.bug_bullet_color = "brown"
     canvas.data.rows = rows
     canvas.data.cols = cols
     canvas.data.width = canvas_width
@@ -114,6 +116,16 @@ def make_bug(row,col):
 def make_player(row,col):
     canvas.data.board[row][col] = canvas.data.player_color
 
+# Makes a player bullet at the row and col
+def make_player_bullet(row,col):
+    canvas.data.board[row][col] = canvas.data.player_bullet_color
+
+def make_bug_bullet(row,col):
+    if is_player(row,col):
+        make_empty(row,col)
+        canvas.data.is_game_over = True
+    canvas.data.board[row][col] = canvas.data.bug_bullet_color
+
 # Makes a cell on the board represent an unoccupied area
 def make_empty(row, col):
     canvas.data.board[row][col] = canvas.data.empty_color
@@ -135,6 +147,12 @@ def move_player(row_delta, col_delta):
         make_player(canvas.data.player_row, canvas.data.player_col)
     redraw_all()
 
+def move_player_bullets():
+    for row in range(len(canvas.data.board)):
+        for col in range(len(canvas.data.board[0])):
+            if is_player_bullet(row, col):
+                move_player_bullet(row, col)
+
 # Moves all of the bugs on the board in their marching direction.
 def move_bugs():
     # The order in which you shift the bugs depends on the direction
@@ -143,13 +161,13 @@ def move_bugs():
         canvas.data.bugs_changed_direction = False
         for row in range(len(canvas.data.board)):
             for col in range(len(canvas.data.board[0])-1, -1, -1):
-                if is_bug(canvas.data.board[row][col]) and not canvas.data.bugs_changed_direction:
+                if is_bug(row, col) and not canvas.data.bugs_changed_direction:
                     move_bug_horizontal(row, col)
     else:
         canvas.data.bugs_changed_direction = False
         for row in range(len(canvas.data.board)):
             for col in range(len(canvas.data.board[0])):
-                if is_bug(canvas.data.board[row][col]) and not canvas.data.bugs_changed_direction:
+                if is_bug(row, col) and not canvas.data.bugs_changed_direction:
                     move_bug_horizontal(row, col)
     redraw_all()
 
@@ -185,11 +203,30 @@ def bugs_are_moving_right():
 def move_all_bugs_down_one_row():
     for row in range(len(canvas.data.board)-1, -1, -1):
         for col in range(len(canvas.data.board[0])-1, -1, -1):
-            if is_bug(canvas.data.board[row][col]):
+            if is_bug(row, col):
                 move_bug_vertical(row, col)
     if should_make_bug_row():
             make_bug_row()
 
+# Creates a player projectile
+def player_shoot():
+    row = canvas.data.player_row
+    col = canvas.data.player_col
+    make_player_bullet(row-1, col)
+
+# Moves a player's projectile occupying the row and col.
+def move_player_bullet(row, col):
+    new_row = row - 1
+    if is_on_board(new_row, col):
+        if is_bug(new_row, col):
+            make_empty(new_row, col)
+            make_empty(row, col)
+        else:
+            make_empty(row, col)
+            make_player_bullet(new_row, col)
+    else:
+        make_empty(row, col)
+    
 # Determines if the player can move to a given location on the board.
 def is_valid_player_move(row, col):
     return is_on_board(row, col) and row == bottom_row()
@@ -199,12 +236,15 @@ def is_on_board(row, col):
     return 0 < row < canvas.data.rows and 0 <= col < canvas.data.cols
 
 # Determines if a given cell on the board is a bug
-def is_bug(cell):
-    return cell == canvas.data.bug_color
+def is_bug(row, col):
+    return canvas.data.board[row][col] == canvas.data.bug_color
 
-# Detemines if a given coordinate on the board is where the player avatar resides
+# Determines if a given coordinate on the board is where the player avatar resides
 def is_player(row, col):
     return canvas.data.board[row][col] == canvas.data.player_color
+
+def is_player_bullet(row, col):
+    return canvas.data.board[row][col] == canvas.data.player_bullet_color
 
 # Determines if the given column is within the horizontal bounds of the board
 def is_off_edge(col):
@@ -245,6 +285,7 @@ def fire_timer():
     redraw_all()
     if not canvas.data.is_game_over:
         move_bugs()
+        move_player_bullets()
     canvas.after(canvas.data.delay, fire_timer)
 
 # Returns the vertical coordinate of the top row on the board
@@ -264,6 +305,8 @@ def key_pressed(event):
             move_player(0, -1)
         elif "Right" == event.keysym:
             move_player(0, +1)
+        elif "Up" == event.keysym:
+            player_shoot()
     redraw_all()
 
 # Run the game
