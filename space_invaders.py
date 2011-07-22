@@ -7,7 +7,7 @@ def init():
     canvas.data.score = 0
     canvas.data.level = 0
     canvas.data.board = make_matrix(canvas.data.rows, canvas.data.cols)
-    canvas.data.delay = 500
+    canvas.data.delay = 250
     canvas.data.bullet_delay = 100
     canvas.data.max_player_bullets = 5
     canvas.data.num_player_bullets = 0
@@ -185,6 +185,7 @@ def move_bug_horizontal(row, col):
         make_empty(row, col)
         if is_player_bullet(row, new_col):
             remove_player_bullet(row, new_col)
+            score_player_hit(row)
         else:
             make_bug(row, new_col)
 
@@ -192,10 +193,14 @@ def move_bug_horizontal(row, col):
 def move_bug_vertical(row, col):
     new_row = row + 1
     make_empty(row, col)
-    if is_player_bullet(new_row, col):
-        remove_player_bullet(new_row, col)
+    if not is_on_board(new_row,col):
+        canvas.data.is_game_over = True
     else:
-        make_bug(new_row, col)
+        if is_player_bullet(new_row, col):
+            remove_player_bullet(new_row, col)
+            score_player_hit(new_row)
+        else:
+            make_bug(new_row, col)
 
 # Changes the direction in which the bugs are marching
 def change_bug_direction():
@@ -233,15 +238,24 @@ def move_player_bullet(row, col):
         if is_bug(new_row, col):
             make_empty(new_row, col)
             remove_player_bullet(row, col)
+            score_player_hit(new_row)
         else:
             make_empty(row, col)
             make_player_bullet(new_row, col)
     else:
         remove_player_bullet(row, col)
 
+# Removes a player's bullet from the board.
 def remove_player_bullet(row, col):
     make_empty(row, col)
     canvas.data.num_player_bullets -= 1
+
+# Tallys the score of a player's bullet hit.
+# The score for a particular hit is judged based
+# on how far away from the player's row the hit
+# occurred.
+def score_player_hit(hit_row):
+    canvas.data.score += canvas.data.rows - hit_row
 
 # Determines if the player can move to a given location on the board.
 def is_valid_player_move(row, col):
@@ -265,6 +279,14 @@ def is_player(row, col):
 def is_player_bullet(row, col):
     return canvas.data.board[row][col] == canvas.data.player_bullet_color
 
+def is_swarm_defeated():
+    for row in range(len(canvas.data.board)):
+        for col in range(len(canvas.data.board[0])):
+            if is_bug(row, col):
+                return False
+    canvas.data.is_game_over = True
+    return True
+
 # Determines if the given column is within the horizontal bounds of the board
 def is_off_edge(col):
     return col < 0 or canvas.data.cols <= col
@@ -284,7 +306,7 @@ def redraw_all():
 
     # Render board
     draw_board()
-    if canvas.data.is_game_over:
+    if canvas.data.is_game_over or is_swarm_defeated():
         game_over_y = canvas.data.height * 2 / 5
         canvas.create_text(canvas.data.width / 2,
                            game_over_y, text="Game Over Man!",
