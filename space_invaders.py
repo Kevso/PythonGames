@@ -8,7 +8,9 @@ def init():
     canvas.data.level = 0
     canvas.data.board = make_matrix(canvas.data.rows, canvas.data.cols)
     canvas.data.delay = 500
-    canvas.data.bullet_delay = 200
+    canvas.data.bullet_delay = 100
+    canvas.data.max_player_bullets = 5
+    canvas.data.num_player_bullets = 0
     canvas.data.is_game_over  = False
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
@@ -181,13 +183,19 @@ def move_bug_horizontal(row, col):
         move_all_bugs_down_one_row()
     else:
         make_empty(row, col)
-        make_bug(row, new_col)
+        if is_player_bullet(row, new_col):
+            remove_player_bullet(row, new_col)
+        else:
+            make_bug(row, new_col)
 
 # Moves a bug to the next row on the board
 def move_bug_vertical(row, col):
     new_row = row + 1
     make_empty(row, col)
-    make_bug(new_row, col)
+    if is_player_bullet(new_row, col):
+        remove_player_bullet(new_row, col)
+    else:
+        make_bug(new_row, col)
 
 # Changes the direction in which the bugs are marching
 def change_bug_direction():
@@ -212,9 +220,11 @@ def move_all_bugs_down_one_row():
 
 # Creates a player projectile
 def player_shoot():
-    row = canvas.data.player_row
-    col = canvas.data.player_col
-    make_player_bullet(row-1, col)
+    if not is_out_of_ammo():
+        row = canvas.data.player_row
+        col = canvas.data.player_col
+        make_player_bullet(row-1, col)
+        canvas.data.num_player_bullets += 1
 
 # Moves a player's projectile occupying the row and col.
 def move_player_bullet(row, col):
@@ -222,13 +232,17 @@ def move_player_bullet(row, col):
     if is_on_board(new_row, col):
         if is_bug(new_row, col):
             make_empty(new_row, col)
-            make_empty(row, col)
+            remove_player_bullet(row, col)
         else:
             make_empty(row, col)
             make_player_bullet(new_row, col)
     else:
-        make_empty(row, col)
-    
+        remove_player_bullet(row, col)
+
+def remove_player_bullet(row, col):
+    make_empty(row, col)
+    canvas.data.num_player_bullets -= 1
+
 # Determines if the player can move to a given location on the board.
 def is_valid_player_move(row, col):
     return is_on_board(row, col) and row == bottom_row()
@@ -236,6 +250,9 @@ def is_valid_player_move(row, col):
 # Determines if a given location is on the board
 def is_on_board(row, col):
     return 0 < row < canvas.data.rows and 0 <= col < canvas.data.cols
+
+def is_out_of_ammo():
+    return canvas.data.max_player_bullets == canvas.data.num_player_bullets
 
 # Determines if a given cell on the board is a bug
 def is_bug(row, col):
