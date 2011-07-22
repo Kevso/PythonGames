@@ -8,6 +8,7 @@ def init():
     canvas.data.level = 0
     canvas.data.board = make_matrix(canvas.data.rows, canvas.data.cols)
     canvas.data.delay = 500
+    canvas.data.bullet_delay = 200
     canvas.data.is_game_over  = False
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
@@ -53,6 +54,7 @@ def run(rows, cols):
     # Go save the planet!
     init()
     fire_timer()
+    fire_projectile_timer()
     root.mainloop()
 
 # Create a rows x cols sized matrix
@@ -285,8 +287,13 @@ def fire_timer():
     redraw_all()
     if not canvas.data.is_game_over:
         move_bugs()
-        move_player_bullets()
     canvas.after(canvas.data.delay, fire_timer)
+
+def fire_projectile_timer():
+    redraw_all()
+    if not canvas.data.is_game_over:
+        move_player_bullets()
+    canvas.after(canvas.data.bullet_delay, fire_projectile_timer)
 
 # Returns the vertical coordinate of the top row on the board
 def top_row():
