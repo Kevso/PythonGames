@@ -32,7 +32,7 @@ def run(rows, cols):
 
     # Size up the board's screen real estate
     cell_size = 15
-    canvas_margin = 20
+    canvas_margin = 50
     canvas_width = cols * cell_size + 2 * canvas_margin
     canvas_height = rows * cell_size + 2 * canvas_margin
     canvas = Canvas(root, width=canvas_width, height=canvas_height)
@@ -58,6 +58,7 @@ def run(rows, cols):
 
     # Go save the planet!
     init()
+    canvas.data.is_game_over  = True # Start in a 'stopped' state.
     fire_timer()
     fire_projectile_timer()
     root.mainloop()
@@ -86,7 +87,6 @@ def draw_cell(row, col, color):
         avatar = canvas.data.player_avatar
 
     canvas.create_image(left, top, image=avatar)
-#    canvas.create_rectangle(left, top, right, bottom, fill=color)
 
 # Determines if the the swarm has been fully rendered
 def should_make_bug_row():
@@ -326,12 +326,11 @@ def redraw_all():
         canvas.create_text(canvas.data.width / 2,
                            game_over_y + int(text_alert_size) + 5, text="Play Again? (y)",
                            fill=text_alert_color, font=text_font + text_normal_size +" bold")
-    else:
-        canvas.create_text(canvas.data.width / 2,
-                           canvas.data.margin / 2,
-                           text="Score: " + str(canvas.data.score), 
-                           fill=text_normal_color,
-                           font=text_font + text_normal_size)
+    canvas.create_text(canvas.data.width / 2,
+                       canvas.data.margin / 2,
+                       text="Score: " + str(canvas.data.score), 
+                       fill=text_normal_color,
+                       font=text_font + text_normal_size)
 
 # Fires the game timer
 def fire_timer():
@@ -363,7 +362,7 @@ def key_pressed(event):
             move_player(0, -1)
         elif "Right" == event.keysym:
             move_player(0, +1)
-        elif "Up" == event.keysym:
+        elif "space" == event.keysym or "Up" == event.keysym:
             player_shoot()
     redraw_all()
 
