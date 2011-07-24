@@ -32,7 +32,7 @@ def run(rows, cols):
 
     # Size up the board's screen real estate
     cell_size = 15
-    canvas_margin = 50
+    canvas_margin = 20
     canvas_width = cols * cell_size + 2 * canvas_margin
     canvas_height = rows * cell_size + 2 * canvas_margin
     canvas = Canvas(root, width=canvas_width, height=canvas_height)
@@ -85,8 +85,7 @@ def draw_cell(row, col, color):
         avatar = canvas.data.player_bullet_avatar
     elif canvas.data.player_color == color:
         avatar = canvas.data.player_avatar
-
-    canvas.create_image(left, top, image=avatar)
+    canvas.create_image(left, top, image=avatar, anchor=NW)
 
 # Determines if the the swarm has been fully rendered
 def should_make_bug_row():
