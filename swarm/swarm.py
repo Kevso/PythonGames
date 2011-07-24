@@ -31,7 +31,7 @@ def run(rows, cols):
     root = Tk()
 
     # Size up the board's screen real estate
-    cell_size = 15
+    cell_size = 21
     canvas_margin = 20
     canvas_width = cols * cell_size + 2 * canvas_margin
     canvas_height = rows * cell_size + 2 * canvas_margin
