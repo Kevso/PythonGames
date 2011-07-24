@@ -4,6 +4,9 @@ import random
 
 # Initialize the game system
 def init():
+    canvas.data.player_avatar = PhotoImage(file="images/player.gif")
+    canvas.data.bug_avatar = PhotoImage(file="images/bug.gif")
+    canvas.data.player_bullet_avatar = PhotoImage(file="images/bullet.gif")
     canvas.data.score = 0
     canvas.data.level = 0
     canvas.data.board = make_matrix(canvas.data.rows, canvas.data.cols)
@@ -74,7 +77,16 @@ def draw_cell(row, col, color):
     bottom = top + cell_size
     
     #update presentation model
-    canvas.create_rectangle(left, top, right, bottom, fill=color)
+    avatar = None
+    if canvas.data.bug_color == color:
+        avatar = canvas.data.bug_avatar
+    elif canvas.data.player_bullet_color == color:
+        avatar = canvas.data.player_bullet_avatar
+    elif canvas.data.player_color == color:
+        avatar = canvas.data.player_avatar
+
+    canvas.create_image(left, top, image=avatar)
+#    canvas.create_rectangle(left, top, right, bottom, fill=color)
 
 # Determines if the the swarm has been fully rendered
 def should_make_bug_row():
