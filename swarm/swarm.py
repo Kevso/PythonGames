@@ -6,7 +6,8 @@ import random
 def init():
     canvas.data.player_avatar = PhotoImage(file="images/player.gif")
     canvas.data.bug_avatar = PhotoImage(file="images/bug.gif")
-    canvas.data.player_bullet_avatar = PhotoImage(file="images/bullet.gif")
+    canvas.data.player_bullet_avatar = PhotoImage(file="images/player_bullet.gif")
+    canvas.data.bug_bullet_avatar = PhotoImage(file="images/bug_bullet.gif")
     canvas.data.score = 0
     canvas.data.level = 0
     canvas.data.board = make_matrix(canvas.data.rows, canvas.data.cols)
@@ -14,6 +15,9 @@ def init():
     canvas.data.bullet_delay = 100
     canvas.data.max_player_bullets = 5
     canvas.data.num_player_bullets = 0
+    canvas.data.max_bug_bullets = 10
+    canvas.data.num_bug_bullets = 0
+    canvas.data.bug_fire_rate = 1 #% fire rate
     canvas.data.is_game_over  = False
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
@@ -83,6 +87,8 @@ def draw_cell(row, col, color):
         avatar = canvas.data.bug_avatar
     elif canvas.data.player_bullet_color == color:
         avatar = canvas.data.player_bullet_avatar
+    elif canvas.data.bug_bullet_color == color:
+        avatar = canvas.data.bug_bullet_avatar
     elif canvas.data.player_color == color:
         avatar = canvas.data.player_avatar
     canvas.create_image(left, top, image=avatar, anchor=NW)
@@ -162,11 +168,19 @@ def move_player(row_delta, col_delta):
         make_player(canvas.data.player_row, canvas.data.player_col)
     redraw_all()
 
+# Moves the player bullets
 def move_player_bullets():
     for row in range(len(canvas.data.board)):
         for col in range(len(canvas.data.board[0])):
             if is_player_bullet(row, col):
                 move_player_bullet(row, col)
+
+# Moves the bug bullets
+def move_bug_bullets():
+    for row in range(len(canvas.data.board)-1, -1, -1):
+        for col in range(len(canvas.data.board[0])-1, -1, -1):
+            if is_bug_bullet(row, col):
+                move_bug_bullet(row, col)
 
 # Moves all of the bugs on the board in their marching direction.
 def move_bugs():
@@ -236,11 +250,16 @@ def move_all_bugs_down_one_row():
 
 # Creates a player projectile
 def player_shoot():
-    if not is_out_of_ammo():
+    if not is_player_out_of_ammo():
         row = canvas.data.player_row
         col = canvas.data.player_col
         make_player_bullet(row-1, col)
         canvas.data.num_player_bullets += 1
+
+# Creates a swarm projectile
+def bug_shoot(row, col):
+    make_bug_bullet(row+1, col)
+    canvas.data.num_bug_bullets += 1                
 
 # Moves a player's projectile occupying the row and col.
 def move_player_bullet(row, col):
@@ -256,10 +275,29 @@ def move_player_bullet(row, col):
     else:
         remove_player_bullet(row, col)
 
+# Moves a bug projectile occupying the row and col.
+def move_bug_bullet(row, col):
+    new_row = row + 1
+    if is_on_board(new_row, col):
+        if is_player(new_row, col):
+            make_empty(new_row, col)
+            remove_bug_bullet(row, col)
+            canvas.data.is_game_over = True
+        else:
+            make_empty(row, col)
+            make_bug_bullet(new_row, col)
+    else:
+        remove_bug_bullet(row, col)
+
 # Removes a player's bullet from the board.
 def remove_player_bullet(row, col):
     make_empty(row, col)
     canvas.data.num_player_bullets -= 1
+
+# Removes a bug bullet from the board.
+def remove_bug_bullet(row, col):
+    make_empty(row, col)
+    canvas.data.num_bug_bullets -= 1
 
 # Tallys the score of a player's bullet hit.
 # The score for a particular hit is judged based
@@ -276,8 +314,12 @@ def is_valid_player_move(row, col):
 def is_on_board(row, col):
     return 0 < row < canvas.data.rows and 0 <= col < canvas.data.cols
 
-def is_out_of_ammo():
+# Determines if the player is out of ammunition
+def is_player_out_of_ammo():
     return canvas.data.max_player_bullets == canvas.data.num_player_bullets
+
+def is_swarm_out_of_ammo():
+    return canvas.data.max_bug_bullets == canvas.data.num_bug_bullets
 
 # Determines if a given cell on the board is a bug
 def is_bug(row, col):
@@ -289,6 +331,9 @@ def is_player(row, col):
 
 def is_player_bullet(row, col):
     return canvas.data.board[row][col] == canvas.data.player_bullet_color
+
+def is_bug_bullet(row, col):
+    return canvas.data.board[row][col] == canvas.data.bug_bullet_color
 
 def is_swarm_defeated():
     for row in range(len(canvas.data.board)):
@@ -336,13 +381,43 @@ def fire_timer():
     redraw_all()
     if not canvas.data.is_game_over:
         move_bugs()
+        fire_bug_bullets()
     canvas.after(canvas.data.delay, fire_timer)
 
+# Increments the projectile loop
 def fire_projectile_timer():
     redraw_all()
     if not canvas.data.is_game_over:
         move_player_bullets()
+        move_bug_bullets()
     canvas.after(canvas.data.bullet_delay, fire_projectile_timer)
+
+# Fires a bullet from the swarm
+def fire_bug_bullets():
+    if not is_swarm_out_of_ammo():
+        for row in range(len(canvas.data.board)):
+            if is_last_bug_row(row):
+                for col in range(len(canvas.data.board[0])):
+                    if is_bug(row, col) and should_bug_fire(row, col):
+                        bug_shoot(row, col)
+
+# Determines, randomly, if a bug should fire
+def should_bug_fire(row, col):
+    return not is_swarm_out_of_ammo() and canvas.data.bug_fire_rate > random.randint(0, 100)
+
+# Determines if the given row is the last row in which bugs
+# appear on the board.
+def is_last_bug_row(row):
+    return row == last_bug_row()
+
+# Returns the vertical cooridnate of the row closest to the 
+# bottom of the board which contains bugs.
+def last_bug_row():
+    last_row = 0
+    for row in range(len(canvas.data.board)):
+        if contains_bugs(row):
+            last_row = row
+    return last_row
 
 # Returns the vertical coordinate of the top row on the board
 def top_row():
