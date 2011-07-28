@@ -17,7 +17,7 @@ def init():
     canvas.data.num_player_bullets = 0
     canvas.data.max_bug_bullets = 10
     canvas.data.num_bug_bullets = 0
-    canvas.data.bug_fire_rate = 1 #% fire rate
+    canvas.data.bug_fire_rate = 5 #% fire rate
     canvas.data.is_game_over  = False
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
@@ -139,13 +139,22 @@ def make_player(row,col):
 
 # Makes a player bullet at the row and col
 def make_player_bullet(row,col):
-    canvas.data.board[row][col] = canvas.data.player_bullet_color
+    if is_bug(row, col):
+        remove_player_bullet(row, col)
+    elif is_bug_bullet(row, col):
+        remove_player_bullet(row, col)
+        remove_bug_bullet(row, col)
+    else:
+        canvas.data.board[row][col] = canvas.data.player_bullet_color
 
 def make_bug_bullet(row,col):
     if is_player(row,col):
-        make_empty(row,col)
+        remove_bug_bullet(row, col)
         canvas.data.is_game_over = True
-    canvas.data.board[row][col] = canvas.data.bug_bullet_color
+    elif is_player_bullet(row, col):
+        remove_player_bullet(row, col)
+    else:
+        canvas.data.board[row][col] = canvas.data.bug_bullet_color
 
 # Makes a cell on the board represent an unoccupied area
 def make_empty(row, col):
@@ -269,6 +278,9 @@ def move_player_bullet(row, col):
             make_empty(new_row, col)
             remove_player_bullet(row, col)
             score_player_hit(new_row)
+        elif is_bug_bullet(new_row, col):
+            remove_player_bullet(new_row, col)
+            remove_bug_bullet(row, col)
         else:
             make_empty(row, col)
             make_player_bullet(new_row, col)
@@ -283,6 +295,9 @@ def move_bug_bullet(row, col):
             make_empty(new_row, col)
             remove_bug_bullet(row, col)
             canvas.data.is_game_over = True
+        elif is_player_bullet(new_row, col):
+            remove_player_bullet(new_row, col)
+            remove_bug_bullet(row, col)
         else:
             make_empty(row, col)
             make_bug_bullet(new_row, col)
@@ -323,14 +338,14 @@ def is_swarm_out_of_ammo():
 
 # Determines if a given cell on the board is a bug
 def is_bug(row, col):
-    return canvas.data.board[row][col] == canvas.data.bug_color
+    return  canvas.data.board[row][col] == canvas.data.bug_color
 
 # Determines if a given coordinate on the board is where the player avatar resides
 def is_player(row, col):
-    return canvas.data.board[row][col] == canvas.data.player_color
+    return is_on_board(row, col) and canvas.data.board[row][col] == canvas.data.player_color
 
 def is_player_bullet(row, col):
-    return canvas.data.board[row][col] == canvas.data.player_bullet_color
+    return  is_on_board(row, col) and canvas.data.board[row][col] == canvas.data.player_bullet_color
 
 def is_bug_bullet(row, col):
     return canvas.data.board[row][col] == canvas.data.bug_bullet_color
