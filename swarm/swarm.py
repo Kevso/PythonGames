@@ -17,7 +17,7 @@ def init():
     canvas.data.num_player_bullets = 0
     canvas.data.max_bug_bullets = 10
     canvas.data.num_bug_bullets = 0
-    canvas.data.bug_fire_rate = 5 #% fire rate
+    canvas.data.bug_fire_rate = 3 #% fire rate
     canvas.data.is_game_over  = False
     canvas.data.player_row = bottom_row()
     canvas.data.player_col = int(len(canvas.data.board[0]) / 2)
@@ -140,7 +140,9 @@ def make_player(row,col):
 # Makes a player bullet at the row and col
 def make_player_bullet(row,col):
     if is_bug(row, col):
+        make_empty(row, col)
         remove_player_bullet(row, col)
+        score_player_hit(row)
     elif is_bug_bullet(row, col):
         remove_player_bullet(row, col)
         remove_bug_bullet(row, col)
@@ -153,8 +155,13 @@ def make_bug_bullet(row,col):
         canvas.data.is_game_over = True
     elif is_player_bullet(row, col):
         remove_player_bullet(row, col)
+        remove_bug_bullet(row, col)
+    elif is_bug(row, col):
+        canvas.data.num_bug_bullets -= 1
     else:
-        canvas.data.board[row][col] = canvas.data.bug_bullet_color
+        if is_on_board(row, col):
+            canvas.data.board[row][col] = canvas.data.bug_bullet_color
+            canvas.data.num_bug_bullets += 1
 
 # Makes a cell on the board represent an unoccupied area
 def make_empty(row, col):
@@ -216,24 +223,33 @@ def move_bug_horizontal(row, col):
         change_bug_direction()
         move_all_bugs_down_one_row()
     else:
-        make_empty(row, col)
         if is_player_bullet(row, new_col):
+            make_empty(row, col)
             remove_player_bullet(row, new_col)
             score_player_hit(row)
+        elif is_bug_bullet(row, new_col):
+            remove_bug_bullet(row, new_col)
+            make_bug(row, new_col)
         else:
+            make_empty(row, col)
             make_bug(row, new_col)
 
 # Moves a bug to the next row on the board
 def move_bug_vertical(row, col):
     new_row = row + 1
     make_empty(row, col)
-    if not is_on_board(new_row,col):
+    if not is_on_board(new_row,col) or new_row == bottom_row():
         canvas.data.is_game_over = True
     else:
         if is_player_bullet(new_row, col):
+            make_empty(row, col)
             remove_player_bullet(new_row, col)
             score_player_hit(new_row)
+        elif is_bug_bullet(new_row, col):
+            remove_bug_bullet(new_row, col)
+            move_bug(new_row, col)
         else:
+            make_empty(row, col)
             make_bug(new_row, col)
 
 # Changes the direction in which the bugs are marching
@@ -267,8 +283,7 @@ def player_shoot():
 
 # Creates a swarm projectile
 def bug_shoot(row, col):
-    make_bug_bullet(row+1, col)
-    canvas.data.num_bug_bullets += 1                
+    make_bug_bullet(row+1, col)                
 
 # Moves a player's projectile occupying the row and col.
 def move_player_bullet(row, col):
@@ -298,6 +313,8 @@ def move_bug_bullet(row, col):
         elif is_player_bullet(new_row, col):
             remove_player_bullet(new_row, col)
             remove_bug_bullet(row, col)
+        elif is_bug(new_row, col):
+            remove_bug_bullet(row, col) # Bugs are immune to their own bullets
         else:
             make_empty(row, col)
             make_bug_bullet(new_row, col)
@@ -314,7 +331,7 @@ def remove_bug_bullet(row, col):
     make_empty(row, col)
     canvas.data.num_bug_bullets -= 1
 
-# Tallys the score of a player's bullet hit.
+# Tallies the score of a player's bullet hit.
 # The score for a particular hit is judged based
 # on how far away from the player's row the hit
 # occurred.
@@ -324,6 +341,9 @@ def score_player_hit(hit_row):
 # Determines if the player can move to a given location on the board.
 def is_valid_player_move(row, col):
     return is_on_board(row, col) and row == bottom_row()
+
+def is_valid_bug_move(row, col):
+    return is_on_board(row, col)
 
 # Determines if a given location is on the board
 def is_on_board(row, col):
@@ -411,21 +431,29 @@ def fire_projectile_timer():
 def fire_bug_bullets():
     if not is_swarm_out_of_ammo():
         for row in range(len(canvas.data.board)):
-            if is_last_bug_row(row):
-                for col in range(len(canvas.data.board[0])):
-                    if is_bug(row, col) and should_bug_fire(row, col):
-                        bug_shoot(row, col)
+            for col in range(len(canvas.data.board[0])):
+                if is_last_bug_in_col(row, col) and should_bug_fire(row, col):
+                    bug_shoot(row, col)
 
 # Determines, randomly, if a bug should fire
 def should_bug_fire(row, col):
     return not is_swarm_out_of_ammo() and canvas.data.bug_fire_rate > random.randint(0, 100)
+
+# Determines if the cell is occupied by the last bug in a column
+def is_last_bug_in_col(row, col):
+    if is_bug(row, col):
+        for row in range(len(canvas.data.board), row, 1):
+            if not is_empty(canvas.data.board[row][col]):
+                return False
+        return True
+    return False
 
 # Determines if the given row is the last row in which bugs
 # appear on the board.
 def is_last_bug_row(row):
     return row == last_bug_row()
 
-# Returns the vertical cooridnate of the row closest to the 
+# Returns the vertical coordinate of the row closest to the 
 # bottom of the board which contains bugs.
 def last_bug_row():
     last_row = 0
